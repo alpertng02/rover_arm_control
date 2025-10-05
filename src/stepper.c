@@ -210,6 +210,7 @@ float stepper_speed_set(stepper* motor, float speed)
 	// Unachiavable frequency
 	if (hz <= 1.0f)
 	{
+		motor->velocity = 0.0f;
 		stepper_enable(motor, false);
 		return 0.0f;
 	}
