@@ -31,7 +31,6 @@ extern "C" {
 
 		set_gripper_max_duty = 9,
 
-		set_max_velocity = 10,
 		set_feedback_hz = 11,
 		set_control_hz = 12,
 
@@ -62,7 +61,6 @@ extern "C" {
 		int32_t min_joint_pos_boundaries[3];
 
 		float max_dutycycle;
-		float max_velocity;
 		float lowpass_fc;
 		float kp;
 		float ki;
@@ -144,11 +142,6 @@ extern "C" {
 				float lowpass_fc;
 			} lowpass;
 
-			// 8. Max velocity limit
-			struct {
-				float max_velocity;
-			} max_velocity;
-
 			// 9. Feedback frequency
 			struct {
 				float feedback_hz;
@@ -183,7 +176,7 @@ extern "C" {
 #pragma pack(push, 1)
 	typedef struct {
 		uint32_t frame_start;
-		float joint_positions[3];
+		int32_t joint_positions[3];
 		float joint_velocities[3];
 		float gripper_pwm_duties[3];
 		uint32_t frame_end;

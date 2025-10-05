@@ -125,7 +125,6 @@ static ManipulatorInitPacket init_configuration = {
 	.min_joint_pos_boundaries = { DEFAULT_MIN_POSITION_BOUNDARY, DEFAULT_MIN_POSITION_BOUNDARY, DEFAULT_MIN_POSITION_BOUNDARY },
 
 	.max_dutycycle = DEFAULT_MOTOR_MAX_DUTY,
-	.max_velocity = DEFAULT_MOTOR_MAX_VELOCITY,
 	.lowpass_fc = DEFAULT_LOWPASS_CUTOFF_HZ,
 	.kp = DEFAULT_KP,
 	.ki = DEFAULT_KI,
@@ -238,7 +237,6 @@ bool manipulator_init_packet_handler(ManipulatorInitPacket* pkt) {
 		init_configuration.gripper_swap_dirs[i] = pkt->gripper_swap_dirs[i];
 
 		init_configuration.max_dutycycle = pkt->max_dutycycle;
-		init_configuration.max_velocity = pkt->max_velocity;
 
 		init_configuration.joint_initial_pos[i] = pkt->joint_initial_pos[i];
 
@@ -374,13 +372,6 @@ void manipulator_command_packet_handler(ManipulatorCommandPacket* pkt) {
 			butter2_filter_init(&(joint_motors[i].filter), pkt->content.lowpass.lowpass_fc, joint_motors[i].fs);
 		}
 		init_configuration.lowpass_fc = pkt->content.lowpass.lowpass_fc;
-		break;
-
-	case set_max_velocity:
-		init_configuration.max_velocity = pkt->content.max_velocity.max_velocity;
-		for (int i = 0; i < MOTOR_COUNT; i++) {
-			joint_motors[i].max_pwm_hz = pkt->content.max_velocity.max_velocity;
-		}
 		break;
 
 	case set_feedback_hz:
