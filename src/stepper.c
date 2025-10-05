@@ -39,7 +39,7 @@ static volatile int32_t stepper_pwm_counters[8];
 static void stepper_pwm_counter_callback(void) {
 	const uint32_t irq = pwm_get_irq_status_mask();
 	for (int i = 0; i < 8; i++) {
-		const uint slice = stepper_slices[i];
+		const uint slice = i;
 		if (irq & (1 << slice)) {
 			// Clear the interrupt flag so the interrupt does not trigger again.
 			pwm_clear_irq(slice);
@@ -216,7 +216,8 @@ float stepper_speed_set(stepper* motor, float speed)
 
 	float hz_actual = stepper_pwm_hz_set(motor, hz);
 	stepper_enable(motor, true);
-	return hz_actual * (dir ? 1.0f : -1.0f);
+	motor->velocity = hz_actual * (dir ? 1.0f : -1.0f);
+	return motor->velocity;
 }
 
 void stepper_position_pid_control(stepper* motor, int32_t ref, float epsilon) {
@@ -275,7 +276,6 @@ void stepper_update(stepper* motor, uint32_t control_hz) {
 	const int32_t temp_counter = stepper_pwm_counters[motor->pwm_slice];
 	int32_t velocity = temp_counter - motor->prev_counter;
 
-	motor->velocity = velocity * control_hz;
 	motor->position += velocity;
 	motor->prev_counter = temp_counter;
 }

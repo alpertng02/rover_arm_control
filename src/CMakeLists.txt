@@ -7,6 +7,7 @@ add_executable(${PROJECT_NAME}
     sinusoidal_profile.c
     lowpass_filters.c
     controller_params.c
+    usb_cdc.c
 
 )
 
