@@ -6,7 +6,7 @@
 #include "pico/stdlib.h"
 #include "manipulator_packets.h"
 
-#define USB_CDC_RX_BUFFER_SIZE (1024)
+#define USB_CDC_RX_BUFFER_SIZE (2048)
 
 bool usb_cdc_send_manipulator_feedback_packet(ManipulatorFeedbackPacket* pkt);
 bool usb_cdc_send_manipulator_state_packet(ManipulatorStatePacket* pkt);
