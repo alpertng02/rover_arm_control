@@ -288,8 +288,12 @@ bool manipulator_init_packet_handler(ManipulatorInitPacket* pkt) {
 	return true;
 }
 
-void manipulator_command_packet_handler(ManipulatorCommandPacket* pkt) {
-	switch ((ManipulatorCommands) pkt->command_id) {
+bool manipulator_command_packet_handler(ManipulatorCommandPacket* pkt) {
+	if (!pkt) {
+		return false;
+	}
+
+	switch (pkt->command_id) {
 
 	case set_joint_velocity:
 		for (int i = 0; i < MOTOR_COUNT; i++) {
@@ -317,11 +321,11 @@ void manipulator_command_packet_handler(ManipulatorCommandPacket* pkt) {
 
 	case set_joint_pos_boundaries:
 		for (int i = 0; i < MOTOR_COUNT; i++) {
-			joint_motors[i].max_position_boundary = (int32_t)pkt->content.joint_pos_boundaries.max_pos;
-			joint_motors[i].min_position_boundary = (int32_t)pkt->content.joint_pos_boundaries.min_pos;
+			joint_motors[i].max_position_boundary = (int32_t) pkt->content.joint_pos_boundaries.max_pos;
+			joint_motors[i].min_position_boundary = (int32_t) pkt->content.joint_pos_boundaries.min_pos;
 
-			init_configuration.max_joint_pos_boundaries[i] = (int32_t)pkt->content.joint_pos_boundaries.max_pos;
-			init_configuration.min_joint_pos_boundaries[i] = (int32_t)pkt->content.joint_pos_boundaries.min_pos;
+			init_configuration.max_joint_pos_boundaries[i] = (int32_t) pkt->content.joint_pos_boundaries.max_pos;
+			init_configuration.min_joint_pos_boundaries[i] = (int32_t) pkt->content.joint_pos_boundaries.min_pos;
 		}
 		break;
 
@@ -379,6 +383,7 @@ void manipulator_command_packet_handler(ManipulatorCommandPacket* pkt) {
 		break;
 	case set_control_hz:
 		init_configuration.control_hz = pkt->content.control_hz.control_hz;
+		manipulator_init_packet_handler(&init_configuration);
 		break;
 
 	case running_mode_enable:
@@ -400,14 +405,17 @@ void manipulator_command_packet_handler(ManipulatorCommandPacket* pkt) {
 		state_pkt.device_id = MANIPULATOR_DEVICE_ID;
 		send_state_packet_mode = true;
 
-		usb_cdc_send_manipulator_state_packet(&state_pkt);
+		if (!usb_cdc_send_manipulator_state_packet(&state_pkt)) {
+			return false;
+		}
 
 		break;
 
 	default:
-		// Unknown command
+		return false;
 		break;
 	}
+	return true;
 }
 
 int main(void) {
