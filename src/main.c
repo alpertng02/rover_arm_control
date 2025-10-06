@@ -266,7 +266,7 @@ bool manipulator_init_packet_handler(ManipulatorInitPacket* pkt) {
 		stepper_pid_ff_init(&joint_motors[i],
 			pkt->min_joint_pos_boundaries[i], pkt->max_joint_pos_boundaries[i],
 			pkt->kp, pkt->ki, pkt->kd,
-			pkt->kv, pkt->ka, 1.0f,
+			pkt->kv, pkt->ka, 0.0f,
 			pkt->p_bound, pkt->i_bound, pkt->d_bound,
 			pkt->lowpass_fc, pkt->control_hz);
 		stepper_current_position_set(&joint_motors[i], pkt->joint_initial_pos[i]);
@@ -450,8 +450,6 @@ int main(void) {
 				print_ready = false;
 			}
 		}
-
-
 	}
 
 	for (int i = 0; i < MOTOR_COUNT; i++) {
