@@ -168,38 +168,44 @@ bool stepper_pid_ff_init(stepper* motor,
 
 // Returns the actual frequency achieved
 float stepper_pwm_hz_set(stepper* motor, float hz) {
-    if (hz <= 0.0f) hz = 1.0f;
+    if (hz <= 0.0f)
+        hz = 1.0f;
 
-    uint32_t sys_clk = clock_get_hz(clk_sys); // usually 125 MHz
-    float clkdiv;
-    uint32_t wrap;
+    const uint32_t sys_clk = clock_get_hz(clk_sys); // usually 125 MHz
+    const float hz_min = sys_clk / (255.0f * 65536.0f);  // ~7.45 Hz min
+    const float hz_max = sys_clk / (1.0f * 2.0f);        // ~62.5 MHz max
 
-    // First try with wrap=1 (max frequency approach)
-    clkdiv = (float)sys_clk / (hz * 2.0f);
+    // Clamp target frequency to achievable range
+    if (hz < hz_min) hz = hz_min;
+    if (hz > hz_max) hz = hz_max;
 
-    if (clkdiv >= 1.0f && clkdiv <= 255.0f) {
-        // Perfect: wrap = 1
-        wrap = 1;
-    } else {
-        // Clamp clkdiv, compute wrap instead
-        if (clkdiv < 1.0f) clkdiv = 1.0f;
+    // Compute the best wrap and clkdiv
+    uint32_t wrap = 0;
+    float clkdiv = 0.0f;
+
+    // Start with minimum divider (highest resolution)
+    clkdiv = 1.0f;
+    wrap = (uint32_t)((float)sys_clk / (clkdiv * hz) - 1.0f);
+
+    if (wrap > 65535) {
+        // Need to increase clkdiv until wrap fits
+        clkdiv = (float)sys_clk / (hz * 65536.0f);
         if (clkdiv > 255.0f) clkdiv = 255.0f;
-        wrap = (uint32_t)((float)sys_clk / (clkdiv * hz)) - 1;
-        if (wrap < 1) wrap = 1;
+        wrap = (uint32_t)((float)sys_clk / (clkdiv * hz) - 1.0f);
         if (wrap > 65535) wrap = 65535;
     }
 
+    // Apply to PWM
     pwm_set_clkdiv(motor->pwm_slice, clkdiv);
     pwm_set_wrap(motor->pwm_slice, wrap);
+    pwm_set_gpio_level(motor->pwm_pin, (wrap + 1) / 2);
 
-    // 50% duty cycle
-    pwm_set_gpio_level(motor->pwm_pin, wrap / 2);
-
-    // Calculate the actual frequency achieved
+    // Calculate actual frequency achieved
     float hz_actual = (float)sys_clk / (clkdiv * (wrap + 1));
 
     return hz_actual;
 }
+
 
 float stepper_speed_set(stepper* motor, float speed)
 {
@@ -344,7 +350,7 @@ void stepper_flexible_profile_set(stepper* motor,
 	float max_velocity, float final_velocity,
 	float max_accel, float max_deaccel,
 	float jerk_acc, float jerk_dec) {
-	const float zero_velocity_threshold = 10.0f;
+	const float zero_velocity_threshold = 1.0f;
 
 	if (fabsf(motor->velocity_filtered) < zero_velocity_threshold && fabsf(final_velocity) <= 1.0f)
 	{
